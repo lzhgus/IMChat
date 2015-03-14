@@ -1,5 +1,5 @@
 # IMChat
-v1.0
+v2.0
 
 Using node.js and socket.io implement a page that will allow users to create new channels,
 and chat with other people in the same channel.
