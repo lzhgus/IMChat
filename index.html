@@ -1,62 +1,92 @@
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
-<script>
-	var socket = io.connect('http://localhost:3000');
+<!doctype html>
+<html>
+    <head>
+        <title>Sockit.IO chat version 2.0</title>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 
-	// on connection to server, ask for user's name with an anonymous callback
-	socket.on('connect', function(){
-		// call the server-side function 'adduser' and send one parameter (value of prompt)
-		socket.emit('adduser', prompt("What's your name?"));
-	});
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body { font: 13px Helvetica, Arial; background: #F5F6CE;}
+        </style>
+        <script>
+            var socket = io.connect('http://localhost:3000');
 
-	// listener, whenever the server emits 'updatechat', this updates the chat body
-	socket.on('updatechat', function (username, data) {
-		$('#conversation').append('<b>'+username + ':</b> ' + data + '<br>');
-	});
+            // on connection to server, ask for user's name with an anonymous callback
+            socket.on('connect', function(){
+            // call the server-side function 'adduser' and send one parameter (value of prompt)
+            socket.emit('adduser', prompt("What's your name?"));
+            });
 
-	// listener, whenever the server emits 'updaterooms', this updates the room the client is in
-	socket.on('updaterooms', function(rooms, current_room) {
-		$('#rooms').empty();
-		$.each(rooms, function(key, value) {
-			if(value == current_room){
-				$('#rooms').append('<div>' + value + '</div>');
-			}
-			else {
-				$('#rooms').append('<div><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></div>');
-			}
-		});
-	});
+            // listener, whenever the server emits 'updatechat', this updates the chat body
+            socket.on('updatechat', function (username, data) {
+                $('#conversation').append('<b>'+username + ':</b> ' + data + '<br><br>');
+            });
 
-	function switchRoom(room){
-		socket.emit('switchRoom', room);
-	}
-	
-	// on load of page
-	$(function(){
-		// when the client clicks SEND
-		$('#datasend').click( function() {
-			var message = $('#data').val();
-			$('#data').val('');
-			// tell server to execute 'sendchat' and send along one parameter
-			socket.emit('sendchat', message);
-		});
+            // listener, whenever the server emits 'updaterooms', this updates the room the client is in
+            socket.on('updaterooms', function(rooms, current_room) {
+                $('#rooms').empty();
+                $.each(rooms, function(key, value) {
+                    if(value == current_room){
+                        $('#rooms').append('<div>' + value + '</div>');
+                    }else {
+                        $('#rooms').append('<div><a href="#" onclick="switchRoom(\''+value+'\')">' + value + '</a></div>');
+                    }
+                });
+            });
 
-		// when the client hits ENTER on their keyboard
-		$('#data').keypress(function(e) {
-			if(e.which == 13) {
-				$(this).blur();
-				$('#datasend').focus().click();
-			}
-		});
-	});
+            function switchRoom(room){
+                socket.emit('switchRoom', room);
+            }
 
-</script>
-<div style="float:left;width:100px;border-right:1px solid black;height:300px;padding:10px;overflow:scroll-y;">
-	<b>ROOMS</b>
-	<div id="rooms"></div>
-</div>
-<div style="float:left;width:300px;height:250px;overflow:scroll-y;padding:10px;">
-	<div id="conversation"></div>
-	<input id="data" style="width:200px;" />
-	<input type="button" id="datasend" value="send" />
-</div>
+            // on load of page
+            $(function(){
+                // when the client clicks SEND
+                $('#datasend').click( function() {
+                    var message = $('#data').val();
+                    $('#data').val('');
+                    // tell server to execute 'sendchat' and send along one parameter
+                    socket.emit('sendchat', message);
+                });
+
+                // when the client hits ENTER on their keyboard
+                $('#data').keypress(function(e) {
+                    if(e.which == 13) {
+                        $(this).blur();
+                        $('#datasend').focus().click();
+                    }
+                });
+
+                //when the client clicks Create Room
+                $('form').submit(function(){
+                    socket.emit('createroom',$('#roomname').val());
+                    $('#roomname').val('');
+                    return false;
+                });
+            });
+
+        </script>
+    </head>
+<body>
+    <div style="float:left;width:200px;border-right:1px solid black;height:750px;padding:10px;overflow:scroll-y;">
+        <b>ROOMS</b>
+        <div id="rooms"></div>
+    </div>
+    
+    <div style="float:left;width:500px;border-right:1px solid black;height:750px;overflow:scroll-y;padding:10px;">
+        <b>CHAT</b>
+        <div id="conversation"></div>
+    </div>
+    
+    <div style="background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%;">
+        <input id="data" style="border: 0; padding: 10px; width: 90%; margin-right: .5%; " />
+        <input type="button" id="datasend" value="send" style="width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px;" />
+    </div>
+    
+    <div style="float:left;width:300px;height:250px;overflow:scroll-y;padding:10px;">
+        <form action="">
+            <input id="roomname" autocomplete="off" /><button>Create Room</button>
+        </form>
+    </div>
+</body>
+</html>

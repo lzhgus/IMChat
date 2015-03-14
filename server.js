@@ -15,7 +15,7 @@ app.get('/', function (req, res) {
 var usernames = {};
 
 // rooms which are currently available in chat
-var rooms = ['room1','room2','room3'];
+var rooms = ['public room'];
 
 io.sockets.on('connection', function (socket) {
     
@@ -24,16 +24,16 @@ io.sockets.on('connection', function (socket) {
 		// store the username in the socket session for this client
 		socket.username = username;
 		// store the room name in the socket session for this client
-		socket.room = 'room1';
+		socket.room = 'public room';
 		// add the client's username to the global list
 		usernames[username] = username;
-		// send client to room 1
-		socket.join('room1');
+		// send client to public room
+		socket.join('public room');
 		// echo to client they've connected
-		socket.emit('updatechat', 'SERVER', 'you have connected to room1');
-		// echo to room 1 that a person has connected to their room
-		socket.broadcast.to('room1').emit('updatechat', 'SERVER', username + ' has connected to this room');
-		socket.emit('updaterooms', rooms, 'room1');
+		socket.emit('updatechat', 'SERVER', 'you have connected to public room');
+		// echo to public room that a person has connected to their room
+		socket.broadcast.to('public room').emit('updatechat', 'SERVER', username + ' has connected to this room');
+		socket.emit('updaterooms', rooms, 'public room');
 	});
 	
     
@@ -43,7 +43,22 @@ io.sockets.on('connection', function (socket) {
 		io.sockets.in(socket.room).emit('updatechat', socket.username, data);
 	});
 	
-    
+    // when the cliken emits 'createroom', this listens and executes
+    socket.on('createroom',function(roomname){
+        socket.leave(socket.room);
+        rooms.push(roomname);
+        socket.join(roomname);
+        socket.emit('updatechat','SERVER','you have create a new room  '+roomname);
+        socket.emit('updatechat','SERVER','you have connected to room '+roomname);
+        //// sent message to OLD room
+		socket.broadcast.to(socket.room).emit('updatechat', 'SERVER', socket.username+' has left this room');
+        // update socket session room title
+		socket.room = roomname;
+		socket.broadcast.to(roomname).emit('updatechat', 'SERVER', socket.username+' has joined this room');
+		socket.emit('updaterooms', rooms, roomname);
+    });
+        
+        
 	socket.on('switchRoom', function(newroom){
 		socket.leave(socket.room);
 		socket.join(newroom);
