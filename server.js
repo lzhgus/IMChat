@@ -55,7 +55,7 @@ io.sockets.on('connection', function (socket) {
         // update socket session room title
 		socket.room = roomname;
 		socket.broadcast.to(roomname).emit('updatechat', 'SERVER', socket.username+' has joined this room');
-		socket.emit('updaterooms', rooms, roomname);
+		io.sockets.emit('updaterooms', rooms, roomname);
     });
         
         
